@@ -1,0 +1,887 @@
+{
+  "info": {
+    "name": "TripPacking API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "TripPacking - Collaborative Travel Packing List API"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8095",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"traveler01\",\n  \"email\": \"traveler01@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.data.token);",
+                  "    console.log(\"Token set:\", jsonData.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"traveler01@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update Me",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"traveler01_updated\",\n  \"email\": \"traveler01_updated@example.com\",\n  \"avatar\": \"https://example.com/avatar.png\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips",
+      "item": [
+        {
+          "name": "List Trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips?PageIndex=1&PageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips"],
+              "query": [
+                {
+                  "key": "PageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "Keyword",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "Status",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tokyo 7 Day Trip\",\n  \"destination\": \"Tokyo, Japan\",\n  \"startDate\": \"2024-07-01T00:00:00Z\",\n  \"endDate\": \"2024-07-07T00:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trips",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips"]
+            }
+          }
+        },
+        {
+          "name": "Get Trip By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Trip",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tokyo & Osaka 10 Day Trip\",\n  \"destination\": \"Tokyo and Osaka, Japan\",\n  \"startDate\": \"2024-07-01T00:00:00Z\",\n  \"endDate\": \"2024-07-10T00:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Trip",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Trip Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/1/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "1", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get My Trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/mine?PageIndex=1&PageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "mine"],
+              "query": [
+                {
+                  "key": "PageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "TripMembers",
+      "item": [
+        {
+          "name": "List Trip Members",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tripmembers?PageIndex=1&PageSize=10&TripId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tripmembers"],
+              "query": [
+                {
+                  "key": "PageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "TripId",
+                  "value": "1"
+                },
+                {
+                  "key": "Role",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Trip Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tripId\": 1,\n  \"userId\": 2,\n  \"role\": \"Member\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tripmembers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tripmembers"]
+            }
+          }
+        },
+        {
+          "name": "Get Trip Member By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tripmembers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tripmembers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Trip Member",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"Owner\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tripmembers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tripmembers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Trip Member",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tripmembers/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tripmembers", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get My Memberships",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tripmembers/mine?PageIndex=1&PageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tripmembers", "mine"],
+              "query": [
+                {
+                  "key": "PageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackingCategories",
+      "item": [
+        {
+          "name": "List Packing Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/packingcategories?PageIndex=1&PageSize=10&TripId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingcategories"],
+              "query": [
+                {
+                  "key": "PageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "TripId",
+                  "value": "1"
+                },
+                {
+                  "key": "Keyword",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Packing Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tripId\": 1,\n  \"name\": \"Documents\",\n  \"sortOrder\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/packingcategories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingcategories"]
+            }
+          }
+        },
+        {
+          "name": "Get Packing Category By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/packingcategories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingcategories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Packing Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Important Documents\",\n  \"sortOrder\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/packingcategories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingcategories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Packing Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/packingcategories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingcategories", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackingItems",
+      "item": [
+        {
+          "name": "List Packing Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/packingitems?PageIndex=1&PageSize=10&TripId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingitems"],
+              "query": [
+                {
+                  "key": "PageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "TripId",
+                  "value": "1"
+                },
+                {
+                  "key": "CategoryId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "IsPacked",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "IsShared",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Packing Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tripId\": 1,\n  \"categoryId\": 1,\n  \"name\": \"Passport\",\n  \"quantity\": 1,\n  \"assignedTo\": 1,\n  \"isPacked\": false,\n  \"isShared\": false,\n  \"dayNumber\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/packingitems",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingitems"]
+            }
+          }
+        },
+        {
+          "name": "Get Packing Item By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/packingitems/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingitems", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Packing Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Passport and Visa\",\n  \"quantity\": 1,\n  \"isPacked\": true,\n  \"isShared\": false,\n  \"dayNumber\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/packingitems/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingitems", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Packing Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/packingitems/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingitems", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackingTemplates",
+      "item": [
+        {
+          "name": "List Packing Templates",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/packingtemplates?PageIndex=1&PageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingtemplates"],
+              "query": [
+                {
+                  "key": "PageIndex",
+                  "value": "1"
+                },
+                {
+                  "key": "PageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "Category",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Packing Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Summer Beach Trip Template\",\n  \"category\": \"Beach\",\n  \"itemsJson\": \"[{\\\"category\\\":\\\"Clothing\\\",\\\"items\\\":[{\\\"name\\\":\\\"Swimsuit\\\",\\\"quantity\\\":2},{\\\"name\\\":\\\"Shorts\\\",\\\"quantity\\\":1}]}]\",\n  \"createdBy\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/packingtemplates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingtemplates"]
+            }
+          }
+        },
+        {
+          "name": "Get Packing Template By Id",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/packingtemplates/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingtemplates", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Packing Template",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Summer Beach Trip Complete Template\",\n  \"category\": \"Beach Vacation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/packingtemplates/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingtemplates", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Packing Template",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/packingtemplates/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "packingtemplates", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stats",
+      "item": [
+        {
+          "name": "Get Overview Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/overview",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stats", "overview"]
+            }
+          }
+        },
+        {
+          "name": "Get Trend Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats/trend?start=2024-01-01T00:00:00Z&end=2024-12-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stats", "trend"],
+              "query": [
+                {
+                  "key": "start",
+                  "value": "2024-01-01T00:00:00Z"
+                },
+                {
+                  "key": "end",
+                  "value": "2024-12-31T23:59:59Z"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    }
+  ]
+}
