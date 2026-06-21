@@ -26,5 +26,10 @@ public class MappingProfile : Profile
 
         CreateMap<PackingTemplate, PackingTemplateDto>().ReverseMap();
         CreateMap<PackingTemplate, CreatePackingTemplateDto>().ReverseMap();
+
+        CreateMap<Invitation, InvitationDto>().ReverseMap();
+        CreateMap<Invitation, CreateInvitationDto>().ReverseMap();
+
+        CreateMap<Notification, NotificationDto>().ReverseMap();
     }
 }

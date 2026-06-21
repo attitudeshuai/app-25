@@ -13,6 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<PackingCategory> PackingCategories => Set<PackingCategory>();
     public DbSet<PackingItem> PackingItems => Set<PackingItem>();
     public DbSet<PackingTemplate> PackingTemplates => Set<PackingTemplate>();
+    public DbSet<Invitation> Invitations => Set<Invitation>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -74,6 +76,35 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.CreatedBy)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Invitation>(entity =>
+        {
+            entity.Property(e => e.Status).HasDefaultValue(InvitationStatus.Pending);
+            entity.HasIndex(e => new { e.TripId, e.InvitedUserId, e.Status });
+            entity.HasOne(e => e.Trip)
+                .WithMany()
+                .HasForeignKey(e => e.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.InvitedBy)
+                .WithMany()
+                .HasForeignKey(e => e.InvitedById)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.InvitedUser)
+                .WithMany()
+                .HasForeignKey(e => e.InvitedUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.Property(e => e.IsRead).HasDefaultValue(false);
+            entity.HasIndex(e => new { e.UserId, e.IsRead });
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         SeedData.Seed(modelBuilder);

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using TripPacking.BackgroundServices;
 using TripPacking.Config;
 using TripPacking.Data;
 using TripPacking.Mappers;
@@ -89,6 +90,8 @@ builder.Services.AddScoped<ITripMemberRepository, TripMemberRepository>();
 builder.Services.AddScoped<IPackingCategoryRepository, PackingCategoryRepository>();
 builder.Services.AddScoped<IPackingItemRepository, PackingItemRepository>();
 builder.Services.AddScoped<IPackingTemplateRepository, PackingTemplateRepository>();
+builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -98,6 +101,10 @@ builder.Services.AddScoped<IPackingCategoryService, PackingCategoryService>();
 builder.Services.AddScoped<IPackingItemService, PackingItemService>();
 builder.Services.AddScoped<IPackingTemplateService, PackingTemplateService>();
 builder.Services.AddScoped<IStatsService, StatsService>();
+builder.Services.AddScoped<IInvitationService, InvitationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+builder.Services.AddHostedService<InvitationCleanupService>();
 
 builder.Services.AddAuthorization();
 
