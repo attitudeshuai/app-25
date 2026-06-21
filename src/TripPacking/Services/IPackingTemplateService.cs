@@ -9,4 +9,6 @@ public interface IPackingTemplateService
     Task<PackingTemplateDto> Create(CreatePackingTemplateDto dto, int currentUserId);
     Task<PackingTemplateDto> Update(int id, UpdatePackingTemplateDto dto, int currentUserId);
     Task Delete(int id, int currentUserId);
+    Task<ParsedTemplateDto> GetParsedById(int id);
+    Task<ApplyTemplateResultDto> ApplyToTrip(ApplyTemplateRequestDto request, int currentUserId);
 }

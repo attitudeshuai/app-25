@@ -48,7 +48,25 @@ public static class SeedData
         modelBuilder.Entity<PackingTemplate>().HasData(
             new PackingTemplate { Id = 1, Name = "Beach Essentials", Category = "Vacation", ItemsJson = "[\"Swimsuit\",\"Sunscreen\",\"Towel\",\"Sunglasses\"]", CreatedBy = 1, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new PackingTemplate { Id = 2, Name = "Hiking Gear", Category = "Outdoor", ItemsJson = "[\"Boots\",\"Rain Jacket\",\"First Aid Kit\",\"Water Bottle\"]", CreatedBy = 2, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new PackingTemplate { Id = 3, Name = "Business Trip", Category = "Work", ItemsJson = "[\"Laptop\",\"Suit\",\"Documents\",\"Charger\"]", CreatedBy = 1, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new PackingTemplate { Id = 3, Name = "Business Trip", Category = "Work", ItemsJson = "[\"Laptop\",\"Suit\",\"Documents\",\"Charger\"]", CreatedBy = 1, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new PackingTemplate
+            {
+                Id = 4,
+                Name = "Weekend Getaway",
+                Category = "Vacation",
+                ItemsJson = "[{\"name\":\"Clothing\",\"sortOrder\":1,\"items\":[{\"name\":\"T-shirt\",\"quantity\":3,\"isShared\":false},{\"name\":\"Jeans\",\"quantity\":2,\"isShared\":false},{\"name\":\"Underwear\",\"quantity\":4,\"isShared\":false},{\"name\":\"Socks\",\"quantity\":4,\"isShared\":false}]},{\"name\":\"Toiletries\",\"sortOrder\":2,\"items\":[{\"name\":\"Toothbrush\",\"quantity\":1,\"isShared\":false},{\"name\":\"Toothpaste\",\"quantity\":1,\"isShared\":true},{\"name\":\"Shampoo\",\"quantity\":1,\"isShared\":true},{\"name\":\"Soap\",\"quantity\":2,\"isShared\":true}]},{\"name\":\"Electronics\",\"sortOrder\":3,\"items\":[{\"name\":\"Phone Charger\",\"quantity\":1,\"isShared\":false},{\"name\":\"Power Bank\",\"quantity\":1,\"isShared\":true},{\"name\":\"Headphones\",\"quantity\":1,\"isShared\":false}]}]",
+                CreatedBy = 1,
+                CreatedAt = new DateTime(2024, 1, 2, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new PackingTemplate
+            {
+                Id = 5,
+                Name = "Camping Adventure",
+                Category = "Outdoor",
+                ItemsJson = "[{\"name\":\"Camping Gear\",\"sortOrder\":1,\"items\":[{\"name\":\"Tent\",\"quantity\":1,\"isShared\":true,\"description\":\"2-person tent\"},{\"name\":\"Sleeping Bag\",\"quantity\":2,\"isShared\":false},{\"name\":\"Sleeping Pad\",\"quantity\":2,\"isShared\":false},{\"name\":\"Camping Stove\",\"quantity\":1,\"isShared\":true}]},{\"name\":\"Cooking\",\"sortOrder\":2,\"items\":[{\"name\":\"Pot\",\"quantity\":1,\"isShared\":true},{\"name\":\"Pan\",\"quantity\":1,\"isShared\":true},{\"name\":\"Utensils\",\"quantity\":2,\"isShared\":false},{\"name\":\"Water Bottle\",\"quantity\":2,\"isShared\":false}]},{\"name\":\"Clothing\",\"sortOrder\":3,\"items\":[{\"name\":\"Hiking Boots\",\"quantity\":1,\"isShared\":false},{\"name\":\"Rain Jacket\",\"quantity\":1,\"isShared\":false},{\"name\":\"Warm Sweater\",\"quantity\":2,\"isShared\":false}]}]",
+                CreatedBy = 2,
+                CreatedAt = new DateTime(2024, 1, 3, 0, 0, 0, DateTimeKind.Utc)
+            }
         );
     }
 }

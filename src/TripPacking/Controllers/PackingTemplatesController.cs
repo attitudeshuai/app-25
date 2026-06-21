@@ -60,6 +60,23 @@ public class PackingTemplatesController : ControllerBase
         return ApiResponse<bool>.Success(true);
     }
 
+    [HttpGet("{id}/parsed")]
+    [AllowAnonymous]
+    public async Task<ApiResponse<ParsedTemplateDto>> GetParsedById(int id)
+    {
+        var result = await _packingTemplateService.GetParsedById(id);
+        return ApiResponse<ParsedTemplateDto>.Success(result);
+    }
+
+    [HttpPost("apply")]
+    [Authorize]
+    public async Task<ApiResponse<ApplyTemplateResultDto>> ApplyToTrip([FromBody] ApplyTemplateRequestDto request)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _packingTemplateService.ApplyToTrip(request, userId);
+        return ApiResponse<ApplyTemplateResultDto>.Success(result);
+    }
+
     private int GetCurrentUserId()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
