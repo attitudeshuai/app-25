@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Trip>(entity =>
         {
             entity.Property(e => e.Status).HasDefaultValue(TripStatus.Planning);
+            entity.Property(e => e.DeletedDefaultCategories).HasDefaultValue(string.Empty);
             entity.HasOne(e => e.Owner)
                 .WithMany()
                 .HasForeignKey(e => e.OwnerId)

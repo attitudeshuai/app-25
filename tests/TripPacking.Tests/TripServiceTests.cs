@@ -14,6 +14,7 @@ public class TripServiceTests
     private readonly Mock<ITripRepository> _mockTripRepository;
     private readonly Mock<ITripMemberRepository> _mockTripMemberRepository;
     private readonly Mock<ITripStateMachineService> _mockStateMachineService;
+    private readonly Mock<IPackingDefaultsInitializerService> _mockDefaultsInitializerService;
     private readonly Mock<IMapper> _mockMapper;
     private readonly TripService _tripService;
 
@@ -22,11 +23,13 @@ public class TripServiceTests
         _mockTripRepository = new Mock<ITripRepository>();
         _mockTripMemberRepository = new Mock<ITripMemberRepository>();
         _mockStateMachineService = new Mock<ITripStateMachineService>();
+        _mockDefaultsInitializerService = new Mock<IPackingDefaultsInitializerService>();
         _mockMapper = new Mock<IMapper>();
         _tripService = new TripService(
             _mockTripRepository.Object,
             _mockTripMemberRepository.Object,
             _mockStateMachineService.Object,
+            _mockDefaultsInitializerService.Object,
             _mockMapper.Object);
     }
 
@@ -64,6 +67,7 @@ public class TripServiceTests
 
         _mockTripRepository.Setup(r => r.AddAsync(It.IsAny<Trip>())).Callback<Trip>(t => t.Id = 1).Returns(Task.CompletedTask);
         _mockTripMemberRepository.Setup(r => r.AddAsync(It.IsAny<TripMember>())).Returns(Task.CompletedTask);
+        _mockDefaultsInitializerService.Setup(s => s.InitializeDefaultCategoriesAsync(It.IsAny<int>())).Returns(Task.CompletedTask);
         _mockMapper.Setup(m => m.Map<TripDto>(It.IsAny<Trip>())).Returns(tripDto);
 
         var result = await _tripService.Create(createDto, ownerId);
@@ -73,6 +77,7 @@ public class TripServiceTests
         result.OwnerId.Should().Be(ownerId);
         _mockTripRepository.Verify(r => r.AddAsync(It.IsAny<Trip>()), Times.Once);
         _mockTripMemberRepository.Verify(r => r.AddAsync(It.IsAny<TripMember>()), Times.Once);
+        _mockDefaultsInitializerService.Verify(s => s.InitializeDefaultCategoriesAsync(1), Times.Once);
     }
 
     [Fact]

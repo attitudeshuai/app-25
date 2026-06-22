@@ -10,17 +10,20 @@ public class TripService : ITripService
     private readonly ITripRepository _tripRepository;
     private readonly ITripMemberRepository _tripMemberRepository;
     private readonly ITripStateMachineService _stateMachineService;
+    private readonly IPackingDefaultsInitializerService _defaultsInitializerService;
     private readonly IMapper _mapper;
 
     public TripService(
         ITripRepository tripRepository,
         ITripMemberRepository tripMemberRepository,
         ITripStateMachineService stateMachineService,
+        IPackingDefaultsInitializerService defaultsInitializerService,
         IMapper mapper)
     {
         _tripRepository = tripRepository;
         _tripMemberRepository = tripMemberRepository;
         _stateMachineService = stateMachineService;
+        _defaultsInitializerService = defaultsInitializerService;
         _mapper = mapper;
     }
 
@@ -102,6 +105,9 @@ public class TripService : ITripService
         };
 
         await _tripMemberRepository.AddAsync(ownerMember);
+
+        await _defaultsInitializerService.InitializeDefaultCategoriesAsync(trip.Id);
+
         return _mapper.Map<TripDto>(trip);
     }
 

@@ -118,6 +118,16 @@ public class PackingCategoryService : IPackingCategoryService
         if (!await IsTripOwner(category.TripId, currentUserId))
             throw new UnauthorizedAccessException("Only trip owner can delete packing categories");
 
+        if (PackingDefaultsInitializerService.IsDefaultCategory(category.Name))
+        {
+            var trip = await _tripRepository.GetByIdAsync(category.TripId);
+            if (trip != null)
+            {
+                trip.AddDeletedDefaultCategory(category.Name);
+                await _tripRepository.UpdateAsync(trip);
+            }
+        }
+
         await _packingCategoryRepository.DeleteAsync(category);
     }
 }

@@ -105,6 +105,7 @@ builder.Services.AddScoped<IStatsService, StatsService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITripStateMachineService, TripStateMachineService>();
+builder.Services.AddScoped<IPackingDefaultsInitializerService, PackingDefaultsInitializerService>();
 
 builder.Services.AddHostedService<InvitationCleanupService>();
 
