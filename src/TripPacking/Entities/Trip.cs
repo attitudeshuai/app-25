@@ -30,4 +30,6 @@ public class Trip
     public ICollection<PackingCategory> PackingCategories { get; set; } = new List<PackingCategory>();
 
     public ICollection<PackingItem> PackingItems { get; set; } = new List<PackingItem>();
+
+    public ICollection<TripStatusHistory> StatusHistories { get; set; } = new List<TripStatusHistory>();
 }

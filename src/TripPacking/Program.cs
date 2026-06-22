@@ -92,6 +92,7 @@ builder.Services.AddScoped<IPackingItemRepository, PackingItemRepository>();
 builder.Services.AddScoped<IPackingTemplateRepository, PackingTemplateRepository>();
 builder.Services.AddScoped<IInvitationRepository, InvitationRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<ITripStatusHistoryRepository, TripStatusHistoryRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -103,6 +104,7 @@ builder.Services.AddScoped<IPackingTemplateService, PackingTemplateService>();
 builder.Services.AddScoped<IStatsService, StatsService>();
 builder.Services.AddScoped<IInvitationService, InvitationService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ITripStateMachineService, TripStateMachineService>();
 
 builder.Services.AddHostedService<InvitationCleanupService>();
 

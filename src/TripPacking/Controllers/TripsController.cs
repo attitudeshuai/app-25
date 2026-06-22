@@ -59,11 +59,19 @@ public class TripsController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
-    public async Task<ApiResponse<TripDto>> UpdateStatus(int id, [FromBody] UpdateTripStatusDto dto)
+    public async Task<ApiResponse<TripStatusTransitionResult>> UpdateStatus(int id, [FromBody] UpdateTripStatusDto dto)
     {
         var userId = GetCurrentUserId();
         var result = await _tripService.UpdateStatus(id, dto, userId);
-        return ApiResponse<TripDto>.Success(result);
+        return ApiResponse<TripStatusTransitionResult>.Success(result);
+    }
+
+    [HttpGet("{id}/status-history")]
+    public async Task<ApiResponse<IEnumerable<TripStatusHistoryDto>>> GetStatusHistory(int id)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _tripService.GetStatusHistory(id, userId);
+        return ApiResponse<IEnumerable<TripStatusHistoryDto>>.Success(result);
     }
 
     [HttpGet("mine")]

@@ -13,6 +13,7 @@ public class TripServiceTests
 {
     private readonly Mock<ITripRepository> _mockTripRepository;
     private readonly Mock<ITripMemberRepository> _mockTripMemberRepository;
+    private readonly Mock<ITripStateMachineService> _mockStateMachineService;
     private readonly Mock<IMapper> _mockMapper;
     private readonly TripService _tripService;
 
@@ -20,8 +21,13 @@ public class TripServiceTests
     {
         _mockTripRepository = new Mock<ITripRepository>();
         _mockTripMemberRepository = new Mock<ITripMemberRepository>();
+        _mockStateMachineService = new Mock<ITripStateMachineService>();
         _mockMapper = new Mock<IMapper>();
-        _tripService = new TripService(_mockTripRepository.Object, _mockTripMemberRepository.Object, _mockMapper.Object);
+        _tripService = new TripService(
+            _mockTripRepository.Object,
+            _mockTripMemberRepository.Object,
+            _mockStateMachineService.Object,
+            _mockMapper.Object);
     }
 
     [Fact]

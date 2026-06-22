@@ -9,12 +9,18 @@ public class TripService : ITripService
 {
     private readonly ITripRepository _tripRepository;
     private readonly ITripMemberRepository _tripMemberRepository;
+    private readonly ITripStateMachineService _stateMachineService;
     private readonly IMapper _mapper;
 
-    public TripService(ITripRepository tripRepository, ITripMemberRepository tripMemberRepository, IMapper mapper)
+    public TripService(
+        ITripRepository tripRepository,
+        ITripMemberRepository tripMemberRepository,
+        ITripStateMachineService stateMachineService,
+        IMapper mapper)
     {
         _tripRepository = tripRepository;
         _tripMemberRepository = tripMemberRepository;
+        _stateMachineService = stateMachineService;
         _mapper = mapper;
     }
 
@@ -136,18 +142,15 @@ public class TripService : ITripService
         await _tripRepository.DeleteAsync(trip);
     }
 
-    public async Task<TripDto> UpdateStatus(int id, UpdateTripStatusDto dto, int currentUserId)
+    public async Task<TripStatusTransitionResult> UpdateStatus(int id, UpdateTripStatusDto dto, int currentUserId)
     {
-        var trip = await _tripRepository.GetByIdAsync(id);
-        if (trip == null)
-            throw new KeyNotFoundException("Trip not found");
+        var targetStatus = (TripStatus)dto.Status;
+        return await _stateMachineService.TransitionStatusAsync(id, targetStatus, currentUserId, dto.Reason);
+    }
 
-        if (!await IsTripOwner(id, currentUserId))
-            throw new UnauthorizedAccessException("Only trip owner can update trip status");
-
-        trip.Status = (TripStatus)dto.Status;
-        await _tripRepository.UpdateAsync(trip);
-        return _mapper.Map<TripDto>(trip);
+    public async Task<IEnumerable<TripStatusHistoryDto>> GetStatusHistory(int id, int currentUserId)
+    {
+        return await _stateMachineService.GetStatusHistoryAsync(id, currentUserId);
     }
 
     public async Task<PagedResult<TripDto>> GetMine(int currentUserId, TripQueryDto query)

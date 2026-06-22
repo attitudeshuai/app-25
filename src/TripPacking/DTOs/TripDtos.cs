@@ -40,6 +40,28 @@ public class UpdateTripStatusDto
 {
     [Required]
     public int Status { get; set; }
+
+    [MaxLength(500)]
+    public string? Reason { get; set; }
+}
+
+public class TripStatusTransitionResult
+{
+    public bool Success { get; set; }
+    public string? Message { get; set; }
+    public TripDto? Trip { get; set; }
+    public List<PackingItemDto>? UnpackedItems { get; set; }
+}
+
+public class TripStatusHistoryDto
+{
+    public int Id { get; set; }
+    public int FromStatus { get; set; }
+    public int ToStatus { get; set; }
+    public int ChangedBy { get; set; }
+    public string? ChangedByUserName { get; set; }
+    public DateTime ChangedAt { get; set; }
+    public string? Reason { get; set; }
 }
 
 public class TripQueryDto

@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<PackingTemplate> PackingTemplates => Set<PackingTemplate>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<TripStatusHistory> TripStatusHistories => Set<TripStatusHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -105,6 +106,20 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TripStatusHistory>(entity =>
+        {
+            entity.HasIndex(e => e.TripId);
+            entity.HasIndex(e => e.ChangedAt);
+            entity.HasOne(e => e.Trip)
+                .WithMany(t => t.StatusHistories)
+                .HasForeignKey(e => e.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ChangedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.ChangedBy)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         SeedData.Seed(modelBuilder);

@@ -31,5 +31,8 @@ public class MappingProfile : Profile
         CreateMap<Invitation, CreateInvitationDto>().ReverseMap();
 
         CreateMap<Notification, NotificationDto>().ReverseMap();
+
+        CreateMap<TripStatusHistory, TripStatusHistoryDto>()
+            .ForMember(dest => dest.ChangedByUserName, opt => opt.MapFrom(src => src.ChangedByUser.Username));
     }
 }
