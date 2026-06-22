@@ -11,9 +11,12 @@ public class CreatePackingItemDto
     public int CategoryId { get; set; }
 
     [Required]
+    [MinLength(1)]
+    [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
     [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "数量必须大于等于 1")]
     public int Quantity { get; set; }
 
     public int? AssignedTo { get; set; }
@@ -22,17 +25,28 @@ public class CreatePackingItemDto
 
     public bool IsShared { get; set; }
 
+    [Range(1, int.MaxValue, ErrorMessage = "天数必须大于等于 1")]
     public int? DayNumber { get; set; }
 }
 
 public class UpdatePackingItemDto
 {
     public int? CategoryId { get; set; }
+
+    [MinLength(1)]
+    [MaxLength(200)]
     public string? Name { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "数量必须大于等于 1")]
     public int? Quantity { get; set; }
+
     public int? AssignedTo { get; set; }
+
     public bool? IsPacked { get; set; }
+
     public bool? IsShared { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "天数必须大于等于 1")]
     public int? DayNumber { get; set; }
 }
 
