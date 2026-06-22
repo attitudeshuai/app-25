@@ -95,12 +95,19 @@ public class TripMemberService : ITripMemberService
         if (!await IsTripOwner(dto.TripId, currentUserId))
             throw new UnauthorizedAccessException("Only trip owner can add members");
 
+        var user = await _userRepository.GetByIdAsync(dto.UserId);
+        if (user == null)
+            throw new KeyNotFoundException("User does not exist");
+
         var existingMembers = await _tripMemberRepository.GetByTripIdAsync(dto.TripId);
         if (existingMembers.Any(m => m.UserId == dto.UserId))
             throw new InvalidOperationException("User is already a member of this trip");
 
         if (!Enum.TryParse<MemberRole>(dto.Role, true, out var role))
             throw new ArgumentException("Invalid role");
+
+        if (role == MemberRole.Owner && existingMembers.Any(m => m.Role == MemberRole.Owner))
+            throw new InvalidOperationException("Trip already has an owner");
 
         var member = new TripMember
         {
@@ -124,7 +131,22 @@ public class TripMemberService : ITripMemberService
             throw new UnauthorizedAccessException("Only trip owner can update members");
 
         if (!string.IsNullOrWhiteSpace(dto.Role) && Enum.TryParse<MemberRole>(dto.Role, true, out var role))
+        {
+            if (role != member.Role)
+            {
+                if (member.Role == MemberRole.Owner)
+                    throw new InvalidOperationException("Cannot change the owner's role");
+
+                if (role == MemberRole.Owner)
+                {
+                    var existingMembers = await _tripMemberRepository.GetByTripIdAsync(member.TripId);
+                    if (existingMembers.Any(m => m.Role == MemberRole.Owner))
+                        throw new InvalidOperationException("Trip already has an owner");
+                }
+            }
+
             member.Role = role;
+        }
 
         await _tripMemberRepository.UpdateAsync(member);
         return await EnrichDto(member);
