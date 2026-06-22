@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.Extensions.Logging;
 using TripPacking.DTOs;
 using TripPacking.Entities;
 using TripPacking.Repositories;
@@ -13,8 +14,9 @@ public class PackingItemService : IPackingItemService
     private readonly IUserRepository _userRepository;
     private readonly IPackingCategoryRepository _packingCategoryRepository;
     private readonly IMapper _mapper;
+    private readonly ILogger<PackingItemService> _logger;
 
-    public PackingItemService(IPackingItemRepository packingItemRepository, ITripRepository tripRepository, ITripMemberRepository tripMemberRepository, IUserRepository userRepository, IPackingCategoryRepository packingCategoryRepository, IMapper mapper)
+    public PackingItemService(IPackingItemRepository packingItemRepository, ITripRepository tripRepository, ITripMemberRepository tripMemberRepository, IUserRepository userRepository, IPackingCategoryRepository packingCategoryRepository, IMapper mapper, ILogger<PackingItemService> logger)
     {
         _packingItemRepository = packingItemRepository;
         _tripRepository = tripRepository;
@@ -22,6 +24,7 @@ public class PackingItemService : IPackingItemService
         _userRepository = userRepository;
         _packingCategoryRepository = packingCategoryRepository;
         _mapper = mapper;
+        _logger = logger;
     }
 
     private async Task<bool> HasTripAccess(int tripId, int userId)
@@ -188,48 +191,77 @@ public class PackingItemService : IPackingItemService
 
         var isOwner = await IsTripOwner(item.TripId, currentUserId);
         var isAssigned = item.AssignedTo.HasValue && item.AssignedTo.Value == currentUserId;
+        var isTripMember = await HasTripAccess(item.TripId, currentUserId);
 
-        if (!isOwner && !isAssigned)
-            throw new UnauthorizedAccessException("Only trip owner or assigned user can update this item");
+        bool isOnlyUpdatingPackingStatus = dto.IsPacked.HasValue
+            && dto.CategoryId == null
+            && dto.Name == null
+            && dto.Quantity == null
+            && dto.AssignedTo == null
+            && dto.IsShared == null
+            && dto.DayNumber == null;
+
+        bool canUpdatePackingStatusForSharedItem = item.IsShared && isOnlyUpdatingPackingStatus && isTripMember;
+        bool hasFullEditPermission = isOwner || isAssigned;
+
+        if (!hasFullEditPermission && !canUpdatePackingStatusForSharedItem)
+            throw new UnauthorizedAccessException("Only trip owner or assigned user can update this item. Shared items' packing status can be updated by any trip member.");
 
         var trip = await _tripRepository.GetByIdAsync(item.TripId);
         if (trip == null)
             throw new ArgumentException($"旅行不存在：TripId={item.TripId}");
 
-        if (dto.CategoryId.HasValue)
+        if (hasFullEditPermission)
         {
-            await ValidateCategoryBelongsToTrip(dto.CategoryId.Value, item.TripId);
-            item.CategoryId = dto.CategoryId.Value;
-        }
+            if (dto.CategoryId.HasValue)
+            {
+                await ValidateCategoryBelongsToTrip(dto.CategoryId.Value, item.TripId);
+                item.CategoryId = dto.CategoryId.Value;
+            }
 
-        if (dto.Name != null)
-        {
-            ValidateName(dto.Name);
-            item.Name = dto.Name;
-        }
+            if (dto.Name != null)
+            {
+                ValidateName(dto.Name);
+                item.Name = dto.Name;
+            }
 
-        if (dto.Quantity.HasValue)
-        {
-            ValidateQuantity(dto.Quantity.Value);
-            item.Quantity = dto.Quantity.Value;
-        }
+            if (dto.Quantity.HasValue)
+            {
+                ValidateQuantity(dto.Quantity.Value);
+                item.Quantity = dto.Quantity.Value;
+            }
 
-        if (dto.AssignedTo.HasValue)
-        {
-            await ValidateAssignedUserIsTripMember(dto.AssignedTo.Value, item.TripId);
-            item.AssignedTo = dto.AssignedTo.Value;
+            if (dto.AssignedTo.HasValue)
+            {
+                await ValidateAssignedUserIsTripMember(dto.AssignedTo.Value, item.TripId);
+                item.AssignedTo = dto.AssignedTo.Value;
+            }
+
+            if (dto.IsShared.HasValue)
+                item.IsShared = dto.IsShared.Value;
+
+            if (dto.DayNumber.HasValue)
+            {
+                ValidateDayNumberRange(dto.DayNumber.Value, trip);
+                item.DayNumber = dto.DayNumber.Value;
+            }
         }
 
         if (dto.IsPacked.HasValue)
-            item.IsPacked = dto.IsPacked.Value;
-
-        if (dto.IsShared.HasValue)
-            item.IsShared = dto.IsShared.Value;
-
-        if (dto.DayNumber.HasValue)
         {
-            ValidateDayNumberRange(dto.DayNumber.Value, trip);
-            item.DayNumber = dto.DayNumber.Value;
+            var oldStatus = item.IsPacked;
+            var newStatus = dto.IsPacked.Value;
+            item.IsPacked = newStatus;
+
+            if (item.IsShared && oldStatus != newStatus)
+            {
+                var user = await _userRepository.GetByIdAsync(currentUserId);
+                var username = user?.Username ?? $"UserId={currentUserId}";
+                _logger.LogInformation(
+                    "Shared item packing status updated: ItemId={ItemId}, ItemName={ItemName}, TripId={TripId}, " +
+                    "UpdatedBy={Username}, OldStatus={OldStatus}, NewStatus={NewStatus}",
+                    item.Id, item.Name, item.TripId, username, oldStatus, newStatus);
+            }
         }
 
         await _packingItemRepository.UpdateAsync(item);

@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TripPacking.DTOs;
 using TripPacking.Entities;
@@ -17,6 +18,7 @@ public class PackingItemServiceTests
     private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly Mock<IPackingCategoryRepository> _mockPackingCategoryRepository;
     private readonly Mock<IMapper> _mockMapper;
+    private readonly Mock<ILogger<PackingItemService>> _mockLogger;
     private readonly PackingItemService _packingItemService;
 
     public PackingItemServiceTests()
@@ -27,13 +29,15 @@ public class PackingItemServiceTests
         _mockUserRepository = new Mock<IUserRepository>();
         _mockPackingCategoryRepository = new Mock<IPackingCategoryRepository>();
         _mockMapper = new Mock<IMapper>();
+        _mockLogger = new Mock<ILogger<PackingItemService>>();
         _packingItemService = new PackingItemService(
             _mockPackingItemRepository.Object,
             _mockTripRepository.Object,
             _mockTripMemberRepository.Object,
             _mockUserRepository.Object,
             _mockPackingCategoryRepository.Object,
-            _mockMapper.Object);
+            _mockMapper.Object,
+            _mockLogger.Object);
     }
 
     private Trip CreateValidTrip(int tripId, int ownerId)
@@ -739,5 +743,263 @@ public class PackingItemServiceTests
         var act = async () => await _packingItemService.Delete(itemId, currentUserId);
 
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task Test_UpdateSharedItemPackingStatus_AsTripMember_Succeeds()
+    {
+        var currentUserId = 5;
+        var itemId = 1;
+        var tripId = 1;
+        var updateDto = new UpdatePackingItemDto
+        {
+            IsPacked = true
+        };
+        var item = new PackingItem
+        {
+            Id = itemId,
+            TripId = tripId,
+            CategoryId = 1,
+            Name = "Shared Tent",
+            Quantity = 1,
+            IsPacked = false,
+            IsShared = true,
+            AssignedTo = 99
+        };
+        var trip = CreateValidTrip(tripId, 1);
+        var members = new List<TripMember>
+        {
+            new TripMember { TripId = tripId, UserId = currentUserId }
+        };
+        var user = new User { Id = currentUserId, Username = "member01" };
+        var itemDto = new PackingItemDto
+        {
+            Id = item.Id,
+            IsPacked = true
+        };
+
+        _mockPackingItemRepository.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
+        _mockTripRepository.Setup(r => r.GetByIdAsync(tripId)).ReturnsAsync(trip);
+        _mockTripMemberRepository.Setup(r => r.GetByTripIdAsync(tripId)).ReturnsAsync(members);
+        _mockUserRepository.Setup(r => r.GetByIdAsync(currentUserId)).ReturnsAsync(user);
+        _mockPackingItemRepository.Setup(r => r.UpdateAsync(item)).Returns(Task.CompletedTask);
+        _mockMapper.Setup(m => m.Map<PackingItemDto>(item)).Returns(itemDto);
+
+        var result = await _packingItemService.Update(itemId, updateDto, currentUserId);
+
+        result.Should().NotBeNull();
+        result.IsPacked.Should().BeTrue();
+        _mockPackingItemRepository.Verify(r => r.UpdateAsync(item), Times.Once);
+        _mockLogger.Verify(
+            x => x.Log(
+                It.Is<LogLevel>(l => l == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Test_UpdateSharedItemPackingStatus_AsNonTripMember_ThrowsUnauthorized()
+    {
+        var currentUserId = 99;
+        var itemId = 1;
+        var tripId = 1;
+        var updateDto = new UpdatePackingItemDto
+        {
+            IsPacked = true
+        };
+        var item = new PackingItem
+        {
+            Id = itemId,
+            TripId = tripId,
+            CategoryId = 1,
+            Name = "Shared Tent",
+            Quantity = 1,
+            IsPacked = false,
+            IsShared = true,
+            AssignedTo = 1
+        };
+        var trip = CreateValidTrip(tripId, 1);
+        var members = new List<TripMember>();
+
+        _mockPackingItemRepository.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
+        _mockTripRepository.Setup(r => r.GetByIdAsync(tripId)).ReturnsAsync(trip);
+        _mockTripMemberRepository.Setup(r => r.GetByTripIdAsync(tripId)).ReturnsAsync(members);
+
+        var act = async () => await _packingItemService.Update(itemId, updateDto, currentUserId);
+
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task Test_UpdateSharedItemPackingStatus_WithOtherFields_ThrowsUnauthorized()
+    {
+        var currentUserId = 5;
+        var itemId = 1;
+        var tripId = 1;
+        var updateDto = new UpdatePackingItemDto
+        {
+            IsPacked = true,
+            Name = "Updated Name"
+        };
+        var item = new PackingItem
+        {
+            Id = itemId,
+            TripId = tripId,
+            CategoryId = 1,
+            Name = "Shared Tent",
+            Quantity = 1,
+            IsPacked = false,
+            IsShared = true,
+            AssignedTo = 99
+        };
+        var trip = CreateValidTrip(tripId, 1);
+        var members = new List<TripMember>
+        {
+            new TripMember { TripId = tripId, UserId = currentUserId }
+        };
+
+        _mockPackingItemRepository.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
+        _mockTripRepository.Setup(r => r.GetByIdAsync(tripId)).ReturnsAsync(trip);
+        _mockTripMemberRepository.Setup(r => r.GetByTripIdAsync(tripId)).ReturnsAsync(members);
+
+        var act = async () => await _packingItemService.Update(itemId, updateDto, currentUserId);
+
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task Test_UpdateNonSharedItemPackingStatus_AsNonAssignedMember_ThrowsUnauthorized()
+    {
+        var currentUserId = 5;
+        var itemId = 1;
+        var tripId = 1;
+        var updateDto = new UpdatePackingItemDto
+        {
+            IsPacked = true
+        };
+        var item = new PackingItem
+        {
+            Id = itemId,
+            TripId = tripId,
+            CategoryId = 1,
+            Name = "Personal Item",
+            Quantity = 1,
+            IsPacked = false,
+            IsShared = false,
+            AssignedTo = 99
+        };
+        var trip = CreateValidTrip(tripId, 1);
+        var members = new List<TripMember>
+        {
+            new TripMember { TripId = tripId, UserId = currentUserId }
+        };
+
+        _mockPackingItemRepository.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
+        _mockTripRepository.Setup(r => r.GetByIdAsync(tripId)).ReturnsAsync(trip);
+        _mockTripMemberRepository.Setup(r => r.GetByTripIdAsync(tripId)).ReturnsAsync(members);
+
+        var act = async () => await _packingItemService.Update(itemId, updateDto, currentUserId);
+
+        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    [Fact]
+    public async Task Test_UpdateSharedItem_AsOwner_CanUpdateAllFields()
+    {
+        var currentUserId = 1;
+        var itemId = 1;
+        var tripId = 1;
+        var updateDto = new UpdatePackingItemDto
+        {
+            Name = "Updated Shared Tent",
+            Quantity = 2,
+            IsPacked = true
+        };
+        var item = new PackingItem
+        {
+            Id = itemId,
+            TripId = tripId,
+            CategoryId = 1,
+            Name = "Shared Tent",
+            Quantity = 1,
+            IsPacked = false,
+            IsShared = true,
+            AssignedTo = 2
+        };
+        var trip = CreateValidTrip(tripId, currentUserId);
+        var itemDto = new PackingItemDto
+        {
+            Id = item.Id,
+            Name = updateDto.Name,
+            Quantity = updateDto.Quantity.Value,
+            IsPacked = updateDto.IsPacked.Value
+        };
+
+        _mockPackingItemRepository.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
+        _mockTripRepository.Setup(r => r.GetByIdAsync(tripId)).ReturnsAsync(trip);
+        _mockPackingItemRepository.Setup(r => r.UpdateAsync(item)).Returns(Task.CompletedTask);
+        _mockMapper.Setup(m => m.Map<PackingItemDto>(item)).Returns(itemDto);
+
+        var result = await _packingItemService.Update(itemId, updateDto, currentUserId);
+
+        result.Should().NotBeNull();
+        result.Name.Should().Be(updateDto.Name);
+        result.Quantity.Should().Be(updateDto.Quantity);
+        result.IsPacked.Should().BeTrue();
+        _mockPackingItemRepository.Verify(r => r.UpdateAsync(item), Times.Once);
+    }
+
+    [Fact]
+    public async Task Test_UpdateSharedItemPackingStatus_NoStatusChange_DoesNotLog()
+    {
+        var currentUserId = 5;
+        var itemId = 1;
+        var tripId = 1;
+        var updateDto = new UpdatePackingItemDto
+        {
+            IsPacked = true
+        };
+        var item = new PackingItem
+        {
+            Id = itemId,
+            TripId = tripId,
+            CategoryId = 1,
+            Name = "Shared Tent",
+            Quantity = 1,
+            IsPacked = true,
+            IsShared = true,
+            AssignedTo = 99
+        };
+        var trip = CreateValidTrip(tripId, 1);
+        var members = new List<TripMember>
+        {
+            new TripMember { TripId = tripId, UserId = currentUserId }
+        };
+        var itemDto = new PackingItemDto
+        {
+            Id = item.Id,
+            IsPacked = true
+        };
+
+        _mockPackingItemRepository.Setup(r => r.GetByIdAsync(itemId)).ReturnsAsync(item);
+        _mockTripRepository.Setup(r => r.GetByIdAsync(tripId)).ReturnsAsync(trip);
+        _mockTripMemberRepository.Setup(r => r.GetByTripIdAsync(tripId)).ReturnsAsync(members);
+        _mockPackingItemRepository.Setup(r => r.UpdateAsync(item)).Returns(Task.CompletedTask);
+        _mockMapper.Setup(m => m.Map<PackingItemDto>(item)).Returns(itemDto);
+
+        var result = await _packingItemService.Update(itemId, updateDto, currentUserId);
+
+        result.Should().NotBeNull();
+        _mockLogger.Verify(
+            x => x.Log(
+                It.Is<LogLevel>(l => l == LogLevel.Information),
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Never);
     }
 }
