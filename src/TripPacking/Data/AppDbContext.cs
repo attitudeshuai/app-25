@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
         {
             entity.HasIndex(e => e.Username).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.Status).HasDefaultValue(UserStatus.Active);
         });
 
         modelBuilder.Entity<Trip>(entity =>

@@ -20,6 +20,8 @@ public class User
     [MaxLength(500)]
     public string? Avatar { get; set; }
 
+    public UserStatus Status { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }

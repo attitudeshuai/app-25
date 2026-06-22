@@ -99,6 +99,9 @@ public class TripMemberService : ITripMemberService
         if (user == null)
             throw new KeyNotFoundException("User does not exist");
 
+        if (user.Status != UserStatus.Active)
+            throw new InvalidOperationException("User account is not active");
+
         var existingMembers = await _tripMemberRepository.GetByTripIdAsync(dto.TripId);
         if (existingMembers.Any(m => m.UserId == dto.UserId))
             throw new InvalidOperationException("User is already a member of this trip");

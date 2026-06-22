@@ -8,9 +8,9 @@ public static class SeedData
     public static void Seed(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>().HasData(
-            new User { Id = 1, Username = "user1", Email = "user1@test.com", PasswordHash = "JAH7Gx5w6b0Gf7zU6zU5zU4zU3zU2zU1zU0zU/zU8zU7zU6zU5zU4zU3zU2zU1zU0=", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new User { Id = 2, Username = "user2", Email = "user2@test.com", PasswordHash = "JAH7Gx5w6b0Gf7zU6zU5zU4zU3zU2zU1zU0zU/zU8zU7zU6zU5zU4zU3zU2zU1zU0=", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-            new User { Id = 3, Username = "user3", Email = "user3@test.com", PasswordHash = "JAH7Gx5w6b0Gf7zU6zU5zU4zU3zU2zU1zU0zU/zU8zU7zU6zU5zU4zU3zU2zU1zU0=", CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            new User { Id = 1, Username = "user1", Email = "user1@test.com", PasswordHash = "JAH7Gx5w6b0Gf7zU6zU5zU4zU3zU2zU1zU0zU/zU8zU7zU6zU5zU4zU3zU2zU1zU0=", Status = UserStatus.Active, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new User { Id = 2, Username = "user2", Email = "user2@test.com", PasswordHash = "JAH7Gx5w6b0Gf7zU6zU5zU4zU3zU2zU1zU0zU/zU8zU7zU6zU5zU4zU3zU2zU1zU0=", Status = UserStatus.Active, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new User { Id = 3, Username = "user3", Email = "user3@test.com", PasswordHash = "JAH7Gx5w6b0Gf7zU6zU5zU4zU3zU2zU1zU0zU/zU8zU7zU6zU5zU4zU3zU2zU1zU0=", Status = UserStatus.Active, CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
 
         modelBuilder.Entity<Trip>().HasData(
