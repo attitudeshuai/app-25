@@ -30,6 +30,17 @@ public class AuthResultDto
 {
     public string Token { get; set; } = string.Empty;
     public UserDto User { get; set; } = null!;
+    public bool PasswordNeedsReset { get; set; }
+}
+
+public class ChangePasswordDto
+{
+    [Required]
+    public string CurrentPassword { get; set; } = string.Empty;
+
+    [Required]
+    [MinLength(6)]
+    public string NewPassword { get; set; } = string.Empty;
 }
 
 public class UserDto

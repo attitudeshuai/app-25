@@ -24,6 +24,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.Username).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
             entity.Property(e => e.Status).HasDefaultValue(UserStatus.Active);
+            entity.Property(e => e.PasswordHashVersion).HasDefaultValue(PasswordHashVersion.Sha256);
         });
 
         modelBuilder.Entity<Trip>(entity =>

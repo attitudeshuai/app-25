@@ -51,6 +51,15 @@ public class AuthController : ControllerBase
         return ApiResponse<UserDto>.Success(result);
     }
 
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<ApiResponse> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        var userId = GetCurrentUserId();
+        await _authService.ChangePassword(userId, dto);
+        return ApiResponse.Success("Password changed successfully");
+    }
+
     private int GetCurrentUserId()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

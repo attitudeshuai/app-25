@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using AutoMapper;
 using TripPacking.DTOs;
 using TripPacking.Entities;
@@ -11,25 +9,19 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly IMapper _mapper;
 
-    public AuthService(IUserRepository userRepository, IJwtService jwtService, IMapper mapper)
+    public AuthService(
+        IUserRepository userRepository,
+        IJwtService jwtService,
+        IPasswordHasher passwordHasher,
+        IMapper mapper)
     {
         _userRepository = userRepository;
         _jwtService = jwtService;
+        _passwordHasher = passwordHasher;
         _mapper = mapper;
-    }
-
-    public static string HashPassword(string password)
-    {
-        using var sha256 = SHA256.Create();
-        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(bytes);
-    }
-
-    public static bool VerifyPassword(string password, string hash)
-    {
-        return HashPassword(password) == hash;
     }
 
     public async Task<UserDto> Register(RegisterDto dto)
@@ -42,11 +34,13 @@ public class AuthService : IAuthService
         if (existingByUsername != null)
             throw new InvalidOperationException("Username is already taken");
 
+        var currentVersion = _passwordHasher.GetCurrentVersion();
         var user = new User
         {
             Username = dto.Username,
             Email = dto.Email,
-            PasswordHash = HashPassword(dto.Password),
+            PasswordHash = _passwordHasher.HashPassword(dto.Password, currentVersion),
+            PasswordHashVersion = currentVersion,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -57,14 +51,25 @@ public class AuthService : IAuthService
     public async Task<AuthResultDto> Login(LoginDto dto)
     {
         var user = await _userRepository.GetByEmailAsync(dto.Email);
-        if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
+        if (user == null)
             throw new UnauthorizedAccessException("Invalid email or password");
+
+        var isValid = _passwordHasher.VerifyPassword(dto.Password, user.PasswordHash, user.PasswordHashVersion);
+        if (!isValid)
+            throw new UnauthorizedAccessException("Invalid email or password");
+
+        var needsUpgrade = user.PasswordHashVersion != _passwordHasher.GetCurrentVersion();
+        if (needsUpgrade)
+        {
+            await UpgradePasswordHash(user, dto.Password);
+        }
 
         var token = _jwtService.GenerateToken(user.Id, user.Username, user.Email);
         return new AuthResultDto
         {
             Token = token,
-            User = _mapper.Map<UserDto>(user)
+            User = _mapper.Map<UserDto>(user),
+            PasswordNeedsReset = needsUpgrade
         };
     }
 
@@ -105,5 +110,32 @@ public class AuthService : IAuthService
         user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
         return _mapper.Map<UserDto>(user);
+    }
+
+    public async Task ChangePassword(int userId, ChangePasswordDto dto)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+            throw new KeyNotFoundException("User not found");
+
+        var isValid = _passwordHasher.VerifyPassword(dto.CurrentPassword, user.PasswordHash, user.PasswordHashVersion);
+        if (!isValid)
+            throw new UnauthorizedAccessException("Current password is incorrect");
+
+        var currentVersion = _passwordHasher.GetCurrentVersion();
+        user.PasswordHash = _passwordHasher.HashPassword(dto.NewPassword, currentVersion);
+        user.PasswordHashVersion = currentVersion;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepository.UpdateAsync(user);
+    }
+
+    private async Task UpgradePasswordHash(User user, string password)
+    {
+        var currentVersion = _passwordHasher.GetCurrentVersion();
+        user.PasswordHash = _passwordHasher.HashPassword(password, currentVersion);
+        user.PasswordHashVersion = currentVersion;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(user);
     }
 }

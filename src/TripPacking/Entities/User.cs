@@ -22,6 +22,8 @@ public class User
 
     public UserStatus Status { get; set; }
 
+    public PasswordHashVersion PasswordHashVersion { get; set; } = PasswordHashVersion.Sha256;
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
