@@ -88,4 +88,28 @@ public class PackingCategoryRepository : IRepository<PackingCategory>, IPackingC
 
         return new PagedResult<PackingCategory> { Items = items, Total = total };
     }
+
+    public async Task<bool> IsSortOrderDuplicateAsync(int tripId, int sortOrder, int? excludeCategoryId = null)
+    {
+        var query = _context.Set<PackingCategory>()
+            .Where(pc => pc.TripId == tripId && pc.SortOrder == sortOrder);
+
+        if (excludeCategoryId.HasValue)
+            query = query.Where(pc => pc.Id != excludeCategoryId.Value);
+
+        return await query.AnyAsync();
+    }
+
+    public async Task<IEnumerable<PackingCategory>> GetByIdsAsync(IEnumerable<int> ids)
+    {
+        return await _context.Set<PackingCategory>()
+            .Where(pc => ids.Contains(pc.Id))
+            .ToListAsync();
+    }
+
+    public async Task UpdateRangeAsync(IEnumerable<PackingCategory> categories)
+    {
+        _context.Set<PackingCategory>().UpdateRange(categories);
+        await _context.SaveChangesAsync();
+    }
 }

@@ -9,4 +9,5 @@ public interface IPackingCategoryService
     Task<PackingCategoryDto> Create(CreatePackingCategoryDto dto, int currentUserId);
     Task<PackingCategoryDto> Update(int id, UpdatePackingCategoryDto dto, int currentUserId);
     Task Delete(int id, int currentUserId);
+    Task<IEnumerable<PackingCategoryDto>> UpdateSortOrders(UpdateCategorySortOrderDto dto, int currentUserId);
 }

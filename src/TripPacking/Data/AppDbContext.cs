@@ -52,6 +52,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<PackingCategory>(entity =>
         {
+            entity.HasIndex(e => new { e.TripId, e.SortOrder }).IsUnique();
             entity.HasOne(e => e.Trip)
                 .WithMany(t => t.PackingCategories)
                 .HasForeignKey(e => e.TripId)

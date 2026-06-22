@@ -58,6 +58,14 @@ public class PackingCategoriesController : ControllerBase
         return ApiResponse<bool>.Success(true);
     }
 
+    [HttpPut("sort-orders")]
+    public async Task<ApiResponse<IEnumerable<PackingCategoryDto>>> UpdateSortOrders([FromBody] UpdateCategorySortOrderDto dto)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _packingCategoryService.UpdateSortOrders(dto, userId);
+        return ApiResponse<IEnumerable<PackingCategoryDto>>.Success(result);
+    }
+
     private int GetCurrentUserId()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

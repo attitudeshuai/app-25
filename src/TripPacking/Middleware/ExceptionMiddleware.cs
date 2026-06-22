@@ -37,6 +37,8 @@ public class ExceptionMiddleware
                 ApiResponse<object>.Fail("Unauthorized", StatusCodes.Status401Unauthorized)),
             ArgumentException => (StatusCodes.Status400BadRequest,
                 ApiResponse<object>.Fail(exception.Message, StatusCodes.Status400BadRequest)),
+            InvalidOperationException => (StatusCodes.Status400BadRequest,
+                ApiResponse<object>.Fail(exception.Message, StatusCodes.Status400BadRequest)),
             KeyNotFoundException => (StatusCodes.Status404NotFound,
                 ApiResponse<object>.Fail(exception.Message, StatusCodes.Status404NotFound)),
             _ => (StatusCodes.Status500InternalServerError,
