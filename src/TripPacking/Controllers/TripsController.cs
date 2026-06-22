@@ -42,6 +42,14 @@ public class TripsController : ControllerBase
         return ApiResponse<TripDto>.Success(result);
     }
 
+    [HttpPost("{id}/validate-dates")]
+    public async Task<ApiResponse<TripDateValidationResult>> ValidateUpdateDates(int id, [FromBody] UpdateTripDto dto)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _tripService.ValidateUpdateDates(id, dto, userId);
+        return ApiResponse<TripDateValidationResult>.Success(result);
+    }
+
     [HttpPut("{id}")]
     public async Task<ApiResponse<TripDto>> Update(int id, [FromBody] UpdateTripDto dto)
     {

@@ -11,6 +11,7 @@ public class TripService : ITripService
     private readonly ITripMemberRepository _tripMemberRepository;
     private readonly ITripStateMachineService _stateMachineService;
     private readonly IPackingDefaultsInitializerService _defaultsInitializerService;
+    private readonly IPackingItemRepository _packingItemRepository;
     private readonly IMapper _mapper;
 
     public TripService(
@@ -18,13 +19,33 @@ public class TripService : ITripService
         ITripMemberRepository tripMemberRepository,
         ITripStateMachineService stateMachineService,
         IPackingDefaultsInitializerService defaultsInitializerService,
+        IPackingItemRepository packingItemRepository,
         IMapper mapper)
     {
         _tripRepository = tripRepository;
         _tripMemberRepository = tripMemberRepository;
         _stateMachineService = stateMachineService;
         _defaultsInitializerService = defaultsInitializerService;
+        _packingItemRepository = packingItemRepository;
         _mapper = mapper;
+    }
+
+    private static void ValidateTripDates(DateTime startDate, DateTime endDate)
+    {
+        if (endDate <= startDate)
+            throw new ArgumentException("结束日期必须严格晚于开始日期");
+
+        var maxPastDate = DateTime.UtcNow.AddYears(-50);
+        if (startDate < maxPastDate)
+            throw new ArgumentException("开始日期不能是超过 50 年前的日期");
+
+        if (endDate < maxPastDate)
+            throw new ArgumentException("结束日期不能是超过 50 年前的日期");
+    }
+
+    private static int CalculateTripDurationDays(DateTime startDate, DateTime endDate)
+    {
+        return (endDate.Date - startDate.Date).Days + 1;
     }
 
     private async Task<bool> HasTripAccess(int tripId, int userId)
@@ -83,6 +104,8 @@ public class TripService : ITripService
 
     public async Task<TripDto> Create(CreateTripDto dto, int ownerId)
     {
+        ValidateTripDates(dto.StartDate, dto.EndDate);
+
         var trip = new Trip
         {
             OwnerId = ownerId,
@@ -111,7 +134,7 @@ public class TripService : ITripService
         return _mapper.Map<TripDto>(trip);
     }
 
-    public async Task<TripDto> Update(int id, UpdateTripDto dto, int currentUserId)
+    public async Task<TripDateValidationResult> ValidateUpdateDates(int id, UpdateTripDto dto, int currentUserId)
     {
         var trip = await _tripRepository.GetByIdAsync(id);
         if (trip == null)
@@ -119,6 +142,66 @@ public class TripService : ITripService
 
         if (!await IsTripOwner(id, currentUserId))
             throw new UnauthorizedAccessException("Only trip owner can update this trip");
+
+        var newStartDate = dto.StartDate ?? trip.StartDate;
+        var newEndDate = dto.EndDate ?? trip.EndDate;
+
+        ValidateTripDates(newStartDate, newEndDate);
+
+        var datesChanged = dto.StartDate.HasValue || dto.EndDate.HasValue;
+        if (!datesChanged)
+        {
+            return new TripDateValidationResult
+            {
+                Success = true,
+                NewTripDurationDays = CalculateTripDurationDays(trip.StartDate, trip.EndDate)
+            };
+        }
+
+        var newDurationDays = CalculateTripDurationDays(newStartDate, newEndDate);
+        var oldDurationDays = CalculateTripDurationDays(trip.StartDate, trip.EndDate);
+
+        if (newDurationDays >= oldDurationDays)
+        {
+            return new TripDateValidationResult
+            {
+                Success = true,
+                NewTripDurationDays = newDurationDays
+            };
+        }
+
+        var allItems = await _packingItemRepository.GetByTripIdAsync(id);
+        var conflictingItems = allItems
+            .Where(i => i.DayNumber.HasValue && i.DayNumber.Value > newDurationDays)
+            .ToList();
+
+        if (conflictingItems.Count == 0)
+        {
+            return new TripDateValidationResult
+            {
+                Success = true,
+                NewTripDurationDays = newDurationDays
+            };
+        }
+
+        return new TripDateValidationResult
+        {
+            Success = false,
+            Message = $"新行程共 {newDurationDays} 天，但有 {conflictingItems.Count} 个物品的天数超出范围，请先调整这些物品的天数",
+            NewTripDurationDays = newDurationDays,
+            ConflictingItems = _mapper.Map<List<PackingItemDto>>(conflictingItems)
+        };
+    }
+
+    public async Task<TripDto> Update(int id, UpdateTripDto dto, int currentUserId)
+    {
+        var validationResult = await ValidateUpdateDates(id, dto, currentUserId);
+        if (!validationResult.Success)
+            throw new ArgumentException(validationResult.Message);
+
+        var trip = await _tripRepository.GetByIdAsync(id);
+        if (trip == null)
+            throw new KeyNotFoundException("Trip not found");
 
         if (!string.IsNullOrWhiteSpace(dto.Title))
             trip.Title = dto.Title;

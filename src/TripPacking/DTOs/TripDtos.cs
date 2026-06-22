@@ -71,3 +71,11 @@ public class TripQueryDto
     public string? Keyword { get; set; }
     public int? Status { get; set; }
 }
+
+public class TripDateValidationResult
+{
+    public bool Success { get; set; }
+    public string? Message { get; set; }
+    public int NewTripDurationDays { get; set; }
+    public List<PackingItemDto>? ConflictingItems { get; set; }
+}
